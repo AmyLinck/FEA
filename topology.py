@@ -27,6 +27,7 @@ neighbors =   [[1], [0, 2], [1, 3], [2]]
 arbiters  =   [0, 1, 2, 3, 3]
 optimizers =  [[0], [0, 1], [1, 2], [2, 3], [3]]
 """
+import math
 
 from benchmarks import _benchmarks
 import numpy as np
@@ -380,3 +381,56 @@ Doesn't have to be hierarchical, but might create less factors and larger cluste
 
 Based on concept of Laplacian matrix; but instead of degree and adjacancy matrix, user interaction and total interaction between variables.  
 """
+
+"""
+Need a graph. 
+
+Clustering
+    - A = adjacency matrix of graph
+    - D = diagonal matrix: d_i,i = \sum_j a_i,j
+    - L = Laplacian = L = D^-1/2 A D^-1/2
+    
+    - Spectral decomp of L, use k-largest eiganvectors (sorted by eiganvalue)
+    - k means cluster to the eiganvectors of L
+    - use fuzzy to assign to multiple clusters
+"""
+
+
+# A is the adjacency matrix
+# data is the list of vectors (similarity matrix?)
+# k is number of eiganvectors to use
+# ep is epsilon for c-means
+def fuzzy_clustering(A, data, k, ep):
+    D = create_diagonal(A)
+    D_inv = np.linalg.inv(D)
+    prod1 = np.matmul(D_inv, A)
+    L = np.matmul(prod1, D_inv)  # creates the laplacian
+    w, v = np.linalg.eig(L)  # Computes eiganvalues and eigan vectors of L
+    v = np.transpose(v)  # Changes col vectors into row vectors so easier to grab
+    sorted_pairs = sorted(zip(w, v), reverse=True)
+
+    tuples = zip(*sorted_pairs)
+    w, v = [list(tup) for tup in tuples]  # The sorted eiganvalues, eiganvectors
+
+    # Now use c means to cluster next to first k elements in v
+    # I assume that the eiganvectors are the centroids
+    for point in data:
+        # point is a vector
+        mag = np.linalg.norm
+        point = point/mag  # normalize to unit vector
+
+
+
+def create_diagonal(A):
+    D = np.zeros(shape=A.shape)
+    width = A.shape[0]
+    for i in range(width):  # assume square
+
+        # Since D is diagonal (and every element is positive) then D^1/2 is the square root of every element in D
+        # D^1/2_i,i = sqrt(D_i,i)
+
+        # D[i][i] = sum(A[i])
+        D[i][i] = math.sqrt(sum(A[i]))
+
+    return D
+
