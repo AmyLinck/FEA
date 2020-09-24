@@ -31,6 +31,7 @@ import math
 
 from benchmarks import _benchmarks
 import numpy as np
+from numpy import linalg as la
 from copy import copy, deepcopy
 
 
@@ -402,23 +403,45 @@ Clustering
 # ep is epsilon for c-means
 def fuzzy_clustering(A, data, k, ep):
     D = create_diagonal(A)
-    D_inv = np.linalg.inv(D)
+    D_inv = la.inv(D)
     prod1 = np.matmul(D_inv, A)
     L = np.matmul(prod1, D_inv)  # creates the laplacian
-    w, v = np.linalg.eig(L)  # Computes eiganvalues and eigan vectors of L
+    w, v = la.eig(L)  # Computes eigenvalues and eigenvectors of L
     v = np.transpose(v)  # Changes col vectors into row vectors so easier to grab
     sorted_pairs = sorted(zip(w, v), reverse=True)
 
     tuples = zip(*sorted_pairs)
-    w, v = [list(tup) for tup in tuples]  # The sorted eiganvalues, eiganvectors
+    w, v = [list(tup) for tup in tuples]  # The sorted eigenvalues, eigenvectors
+
+    eigenvectors = v[:k]
+
+    # Make the vectors positive
+    # TODO: check if it matters which components are negative (flip sign if most are negative?)
+    for i in range(len(eigenvectors)):  # len(eigenvectors) = k
+        if eigenvectors[i][0] < 0:  # if the first component is negative make it positive
+            eigenvectors[i] = -1 * eigenvectors[i]
 
     # Now use c means to cluster next to first k elements in v
-    # I assume that the eiganvectors are the centroids
-    for point in data:
-        # point is a vector
-        mag = np.linalg.norm
-        point = point/mag  # normalize to unit vector
+    # I assume that the eigenvectors are the centroids
+    max_magnitude = max(la.norm(x) for x in data)
+    normalized = data/max_magnitude
+    distances = []  # store distance from each point to each centroid
 
+    # Compute the distances to clusters
+    for point in normalized:
+        # point is a vector
+        d = [la.norm(point - v) for v in eigenvectors]  # gets the distance to each eigenvector
+        distances.append(d)
+
+    clusters = [[] for i in range(len(eigenvectors))]  # empty 2d array
+    # Assign to clusters
+    for i in range(len(distances)):
+        # i is the variable
+        for d in range(len(distances[i])):
+            if distances[i][d] < ep:  # if distance to eigenvector is less than threshold, add the variable to cluster
+                clusters[d].append(i)
+
+    return clusters
 
 
 def create_diagonal(A):
@@ -433,4 +456,3 @@ def create_diagonal(A):
         D[i][i] = math.sqrt(sum(A[i]))
 
     return D
-
