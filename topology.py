@@ -408,10 +408,10 @@ def fuzzy_clustering(A, data, k, ep):
     L = np.matmul(prod1, D_inv)  # creates the laplacian
     w, v = la.eig(L)  # Computes eigenvalues and eigenvectors of L
     v = np.transpose(v)  # Changes col vectors into row vectors so easier to grab
-    sorted_pairs = sorted(zip(w, v), reverse=True)
 
-    tuples = zip(*sorted_pairs)
-    w, v = [list(tup) for tup in tuples]  # The sorted eigenvalues, eigenvectors
+    permutation = w.argsort()
+    w = w[permutation]
+    v = v[permutation]
 
     eigenvectors = v[:k]
 
