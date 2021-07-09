@@ -80,6 +80,8 @@ class FactorArchitecture(object):
             pickle_object = pickle.load(open(path_to_load, 'rb'))
             self.__dict__.update(pickle_object)
 
+        self.get_factor_topology_elements()
+
     def load_csv_architecture(self, file, dim, method=""):
         from refactoring.utilities.CSVreader import CSVReader
 

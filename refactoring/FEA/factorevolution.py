@@ -38,7 +38,7 @@ class FEA:
         fa = self.factor_architecture
         alg = self.base_algorithm
         return [
-            alg(function=self.function, ga_runs=self.base_alg_iterations, population_size=self.pop_size, factor=factor)
+            alg(self.base_alg_iterations, self.pop_size, self.function, len(factor), factor, self.global_solution)
             for factor in fa.factors]
 
     def share_solution(self):
