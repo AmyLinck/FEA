@@ -8,13 +8,16 @@ from refactoring.baseAlgorithms.pso import PSO
 import sys
 
 if __name__ == '__main__':
-    outputcsv = open('./MeetRandom/1000_dim_f5.csv', 'a')
+
 
     if len(sys.argv) == 4:
+        outputcsv = open(f'./MeetRandom/1000_dim_f{int(sys.argv[1])}.csv', 'a')
         f = Function(int(sys.argv[1]), shift_data_file=sys.argv[2], matrix_data_file=sys.argv[3])
     elif len(sys.argv) == 3:
+        outputcsv = open(f'./MeetRandom/1000_dim_f{int(sys.argv[1])}.csv', 'a')
         f = Function(int(sys.argv[1]), shift_data_file=sys.argv[2])
     else:
+        outputcsv = open('./MeetRandom/1000_dim_f5.csv', 'a')
         f = Function(5, shift_data_file="f05_op.txt", matrix_data_file="f05_m.txt")
     print(f.function_to_call)
 
@@ -22,17 +25,17 @@ if __name__ == '__main__':
     # outputfile.write("Dim: " + str(dim) + " Seed = 1 \t ODG and DG\n")
     random_iteration = [5, 45, 50, 100, 300, 500, 1000, 3000, 5000]  # 5, 50, 100, 200, 500, 1000, 2000, 5000, 10000
     k = "DG,ODG,MEET," + ','.join([f'Rand {sum(random_iteration[0:i + 1])}' for i in range(len(random_iteration))])
-    outputcsv.write(k)
+    outputcsv.write(k + '\n')
 
     # odg = FactorArchitecture(dim=dim)
     # print('starting odg')
     # odg.overlapping_diff_grouping(f, 0.001)
-    # odg.save_architecture('MeetRandom/odg')
+    # odg.save_architecture('MeetRandom/odg2')
     #
     # dg = FactorArchitecture(dim=dim)
     # print('starting dg')
     # dg.diff_grouping(f, 0.001)
-    # dg.save_architecture('MeetRandom/dg')
+    # dg.save_architecture('MeetRandom/dg2')
 
     for i in range(15):
         outputfile = open('./MeetRandom/trial.txt', 'a')
@@ -64,7 +67,7 @@ if __name__ == '__main__':
         # meet = FactorArchitecture(dim=dim)
         # meet.MEET(IM)
         # print("finished MEET")
-        # meet.save_architecture("MeetRandom/meet")
+        # meet.save_architecture("MeetRandom/meet2")
 
         # factor_graphing(meet.factors, "./MeetRandom/imgs/meet/")
 
@@ -112,7 +115,9 @@ if __name__ == '__main__':
 
         keys = k.split(',')
         if all(elem in keys for elem in summary.keys()):
+            print("writing to file")
             line_out = ','.join([str(summary[key]) for key in keys])
+            print(line_out)
             outputcsv.write(line_out + '\n')
         else:
             print(f'{summary.keys()} != {keys}')
