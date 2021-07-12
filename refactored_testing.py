@@ -5,11 +5,17 @@ from refactoring.FEA.factorarchitecture import FactorArchitecture
 from refactoring.baseAlgorithms.pso import PSO
 
 # from stat_analysis import factor_graphing
+import sys
 
 if __name__ == '__main__':
-    outputcsv = open('./MeetRandom/1000_dim_f17.csv', 'a')
+    outputcsv = open('./MeetRandom/1000_dim_f5.csv', 'a')
 
-    f = Function(17, shift_data_file="f17_op.txt")
+    if len(sys.argv) == 4:
+        f = Function(int(sys.argv[1]), shift_data_file=sys.argv[2], matrix_data_file=sys.argv[3])
+    elif len(sys.argv) == 3:
+        f = Function(int(sys.argv[1]), shift_data_file=sys.argv[2])
+    else:
+        f = Function(5, shift_data_file="f05_op.txt", matrix_data_file="f05_m.txt")
     print(f.function_to_call)
 
     dim = 1000
@@ -50,14 +56,15 @@ if __name__ == '__main__':
 
             # factor_graphing(meet.factors, f"./MeetRandom/imgs/rand{total}/")
 
-        print("Starting MEET IM")
-        im = MEE(f, dim, 3000, 0, 0.001, 0.000001, use_mic_value=True)
-        IM = im.get_IM()
-        print("finished IM")
-        meet = FactorArchitecture(dim=dim)
-        meet.MEET(IM)
-        print("finished MEET")
-        meet.save_architecture("MeetRandom/meet")
+        # Skip MEET for time
+        # print("Starting MEET IM")
+        # im = MEE(f, dim, 3000, 0, 0.001, 0.000001, use_mic_value=True)
+        # IM = im.get_IM()
+        # print("finished IM")
+        # meet = FactorArchitecture(dim=dim)
+        # meet.MEET(IM)
+        # print("finished MEET")
+        # meet.save_architecture("MeetRandom/meet")
 
         # factor_graphing(meet.factors, "./MeetRandom/imgs/meet/")
 
