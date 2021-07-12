@@ -18,6 +18,16 @@ if __name__ == '__main__':
     k = "DG,ODG,MEET," + ','.join([f'Rand {sum(random_iteration[0:i + 1])}' for i in range(len(random_iteration))])
     outputcsv.write(k)
 
+    # odg = FactorArchitecture(dim=dim)
+    # print('starting odg')
+    # odg.overlapping_diff_grouping(f, 0.001)
+    # odg.save_architecture('MeetRandom/odg')
+    #
+    # dg = FactorArchitecture(dim=dim)
+    # print('starting dg')
+    # dg.diff_grouping(f, 0.001)
+    # dg.save_architecture('MeetRandom/dg')
+
     for i in range(15):
         outputfile = open('./MeetRandom/trial.txt', 'a')
         print("running")
@@ -99,4 +109,4 @@ if __name__ == '__main__':
             outputcsv.write(line_out + '\n')
         else:
             print(f'{summary.keys()} != {keys}')
-
+        outputfile.close()
