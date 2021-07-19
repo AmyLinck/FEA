@@ -3,7 +3,7 @@ import numpy as np
 
 class FEA:
     def __init__(self, function, fea_runs, generations, pop_size, factor_architecture, base_algorithm, continuous=True,
-                 seed=None):
+                 seed=None, callback=None):
         if seed is not None:
             np.random.seed(seed)
 
@@ -20,6 +20,8 @@ class FEA:
         self.set_global_solution(continuous)
         self.subpopulations = self.initialize_factored_subpopulations()
 
+        self.callback = callback  # function called at each fea run, takes 2 param self, fea_run
+
     def run(self):
         for fea_run in range(self.fea_runs):
             for alg in self.subpopulations:
@@ -27,6 +29,8 @@ class FEA:
             self.compete()
             self.share_solution()
             print('fea run ', fea_run, self.global_fitness)
+            if self.callback is not None:
+                self.callback(self, fea_run)
 
     def set_global_solution(self, continuous):
         if continuous:

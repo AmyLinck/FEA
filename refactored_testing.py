@@ -4,121 +4,80 @@ from refactoring.FEA.factorevolution import FEA
 from refactoring.FEA.factorarchitecture import FactorArchitecture
 from refactoring.baseAlgorithms.pso import PSO
 
+import functools
 # from stat_analysis import factor_graphing
 import sys
 
-if __name__ == '__main__':
 
+def output_callback(output_file, fea, fea_run):
+    # print(f'WRITING:  , , {fea_run}, {fea.global_fitness}')
+    output_file.write(f" , , {fea_run}, {fea.global_fitness}\n")
+    output_file.flush()
+
+
+if __name__ == '__main__':
+    dim = 200
 
     if len(sys.argv) == 4:
-        outputcsv = open(f'./MeetRandom/1000_dim_f{int(sys.argv[1])}.csv', 'a')
+        outputcsv = open(f'./MeetRandom/tuning_{dim}_f{int(sys.argv[1])}.csv', 'a')
         f = Function(int(sys.argv[1]), shift_data_file=sys.argv[2], matrix_data_file=sys.argv[3])
     elif len(sys.argv) == 3:
-        outputcsv = open(f'./MeetRandom/1000_dim_f{int(sys.argv[1])}.csv', 'a')
+        outputcsv = open(f'./MeetRandom/tuning_{dim}_f{int(sys.argv[1])}.csv', 'a')
         f = Function(int(sys.argv[1]), shift_data_file=sys.argv[2])
     else:
-        outputcsv = open('./MeetRandom/1000_dim_f5.csv', 'a')
+        outputcsv = open('./MeetRandom/tuning_200_f5', 'a')
         f = Function(5, shift_data_file="f05_op.txt", matrix_data_file="f05_m.txt")
     print(f.function_to_call)
 
-    dim = 1000
+
     # outputfile.write("Dim: " + str(dim) + " Seed = 1 \t ODG and DG\n")
-    random_iteration = [5, 45, 50, 100, 300, 500, 1000, 3000, 5000]  # 5, 50, 100, 200, 500, 1000, 2000, 5000, 10000
-    k = "DG,ODG,MEET," + ','.join([f'Rand {sum(random_iteration[0:i + 1])}' for i in range(len(random_iteration))])
+    k = "Pop, PSO,FEA_ITER, ODG"
     outputcsv.write(k + '\n')
 
-    # odg = FactorArchitecture(dim=dim)
-    # print('starting odg')
-    # odg.overlapping_diff_grouping(f, 0.001)
-    # odg.save_architecture('MeetRandom/odg2')
-    #
-    # dg = FactorArchitecture(dim=dim)
-    # print('starting dg')
-    # dg.diff_grouping(f, 0.001)
-    # dg.save_architecture('MeetRandom/dg2')
+    odg = FactorArchitecture(dim=dim)
+    print('starting odg')
+    odg.overlapping_diff_grouping(f, 0.001)
+    odg.save_architecture('MeetRandom/odg')
 
-    for i in range(15):
-        outputfile = open('./MeetRandom/trial.txt', 'a')
-        print("running")
+    dg = FactorArchitecture(dim=dim)
+    print('starting dg')
+    dg.diff_grouping(f, 0.001)
+    dg.save_architecture('MeetRandom/dg')
 
-        summary = {}
-        outputfile.write("Dim: " + str(dim) + " Random Init\n")
 
-        total = 0
-        im = RandomTree(f, dim, 3000, 0.001, 0.000001)
-        for it in random_iteration:
-            total += it
+    callback_func = functools.partial(output_callback, outputcsv)
+    pso_options = [10, 15, 20]
+    pop_size = [50, 100, 300, 500]
+    fea_max = 25
+    for i in range(3):
+        for pop in pop_size:
+            for pso_iter in pso_options:
+                print(f"I: {i}\tpop: {pop}\tPSO_ITER: {pso_iter}")
+                outputcsv.write(f"{pop}, {pso_iter}, , \n")
 
-            print("Starting Random " + str(total))
-            T = im.run(it)
-            print("finished Random " + str(total))
-            meet = FactorArchitecture(dim=dim)
-            meet.MEET(T)
-            print("finished Random " + str(total))
-            meet.save_architecture("MeetRandom/rand" + str(total))
+                outputfile = open('./MeetRandom/tuning.txt', 'a')
+                print("running")
 
-            # factor_graphing(meet.factors, f"./MeetRandom/imgs/rand{total}/")
+                summary = {}
+                outputfile.write("Dim: " + str(dim) + " Random Init\n")
 
-        # Skip MEET for time
-        # print("Starting MEET IM")
-        # im = MEE(f, dim, 3000, 0, 0.001, 0.000001, use_mic_value=True)
-        # IM = im.get_IM()
-        # print("finished IM")
-        # meet = FactorArchitecture(dim=dim)
-        # meet.MEET(IM)
-        # print("finished MEET")
-        # meet.save_architecture("MeetRandom/meet2")
+                fa = FactorArchitecture()
+                print("FEA ODG")
+                fa.load_architecture("MeetRandom/odg")
+                fea = FEA(f, fea_max, pso_iter, pop, fa, PSO, seed=i, callback=callback_func)
+                fea.run()
+                outputfile.write(f"ODG, \t\t{fea.global_fitness}\n")
+                print(fea.global_fitness)
+                summary['ODG'] = fea.global_fitness
 
-        # factor_graphing(meet.factors, "./MeetRandom/imgs/meet/")
+                print(summary)
 
-        fa = FactorArchitecture()
-        print("FEA MEET")
-        fa.load_architecture("MeetRandom/meet")
-        fea = FEA(f, 10, 10, 3, fa, PSO, seed=i)
-        fea.run()
-        outputfile.write(f"MEET, \t\t{fea.global_fitness}\n")
-        print(fea.global_fitness)
-        summary['MEET'] = fea.global_fitness
-
-        total = 0
-        for it in random_iteration:
-            total += it
-            fa = FactorArchitecture()
-            print("FEA Rand " + str(total))
-            fa.load_architecture("MeetRandom/rand" + str(total))
-            fea = FEA(f, 10, 10, 3, fa, PSO, seed=i)
-            fea.run()
-            outputfile.write(f"Rand {total}, \t{fea.global_fitness}\n")
-            print(fea.global_fitness)
-
-            summary[f'Rand {total}'] = fea.global_fitness
-
-        fa = FactorArchitecture()
-        print("FEA ODG")
-        fa.load_architecture("MeetRandom/odg")
-        fea = FEA(f, 10, 10, 3, fa, PSO, seed=i)
-        fea.run()
-        outputfile.write(f"ODG, \t\t{fea.global_fitness}\n")
-        print(fea.global_fitness)
-        summary['ODG'] = fea.global_fitness
-
-        fa = FactorArchitecture()
-        print("FEA DG")
-        fa.load_architecture("MeetRandom/dg")
-        fea = FEA(f, 10, 10, 3, fa, PSO, seed=i)
-        fea.run()
-        outputfile.write(f"DG, \t\t{fea.global_fitness}\n")
-        print(fea.global_fitness)
-        summary['DG'] = fea.global_fitness
-
-        print(summary)
-
-        keys = k.split(',')
-        if all(elem in keys for elem in summary.keys()):
-            print("writing to file")
-            line_out = ','.join([str(summary[key]) for key in keys])
-            print(line_out)
-            outputcsv.write(line_out + '\n')
-        else:
-            print(f'{summary.keys()} != {keys}')
-        outputfile.close()
+                # keys = k.split(',')
+                # if all(elem in keys for elem in summary.keys()):
+                #     print("writing to file")
+                #     line_out = ','.join([str(summary[key]) for key in keys])
+                #     print(line_out)
+                #     outputcsv.write(line_out + '\n')
+                # else:
+                #     print(f'{summary.keys()} != {keys}')
+                outputfile.close()
