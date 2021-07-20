@@ -25,7 +25,7 @@ if __name__ == '__main__':
         outputcsv = open(f'./MeetRandom/tuning_{dim}_f{int(sys.argv[1])}.csv', 'a')
         f = Function(int(sys.argv[1]), shift_data_file=sys.argv[2])
     else:
-        outputcsv = open('./MeetRandom/tuning_200_f5', 'a')
+        outputcsv = open('MeetRandom/tuning_200_f5.csv', 'a')
         f = Function(5, shift_data_file="f05_op.txt", matrix_data_file="f05_m.txt")
     print(f.function_to_call)
 
@@ -37,12 +37,12 @@ if __name__ == '__main__':
     odg = FactorArchitecture(dim=dim)
     print('starting odg')
     odg.overlapping_diff_grouping(f, 0.001)
-    odg.save_architecture('MeetRandom/odg')
+    odg.save_architecture('MeetRandom/architectures/odg')
 
     dg = FactorArchitecture(dim=dim)
     print('starting dg')
     dg.diff_grouping(f, 0.001)
-    dg.save_architecture('MeetRandom/dg')
+    dg.save_architecture('MeetRandom/architectures/dg')
 
 
     callback_func = functools.partial(output_callback, outputcsv)
@@ -63,7 +63,7 @@ if __name__ == '__main__':
 
                 fa = FactorArchitecture()
                 print("FEA ODG")
-                fa.load_architecture("MeetRandom/odg")
+                fa.load_architecture("MeetRandom/architectures/odg")
                 fea = FEA(f, fea_max, pso_iter, pop, fa, PSO, seed=i, callback=callback_func)
                 fea.run()
                 outputfile.write(f"ODG, \t\t{fea.global_fitness}\n")
