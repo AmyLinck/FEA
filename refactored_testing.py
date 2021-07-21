@@ -1,8 +1,8 @@
-from refactoring.optimizationProblems.continuous_functions import Function
+from refactoring.optimizationproblems.continuous_functions import Function
 from refactoring.utilities.varinteraction import MEE, RandomTree
 from refactoring.FEA.factorevolution import FEA
 from refactoring.FEA.factorarchitecture import FactorArchitecture
-from refactoring.baseAlgorithms.pso import PSO
+from refactoring.basealgorithms.pso import PSO
 
 import functools
 # from stat_analysis import factor_graphing
