@@ -37,24 +37,25 @@ if __name__ == '__main__':
     k = "PSO,DG,ODG,MEET," + ','.join([f'Rand {sum(random_iteration[0:i + 1])}' for i in range(len(random_iteration))])
     outputcsv.write(k + '\n')
 
-    odg = FactorArchitecture(dim=dim)
-    print('starting odg')
-    odg.overlapping_diff_grouping(f, 0.001)
-    odg.save_architecture('MeetRandom/architectures/odg.arch')
+    # odg = FactorArchitecture(dim=dim)
+    # print('starting odg')
+    # odg.overlapping_diff_grouping(f, 0.001)
+    # odg.save_architecture('MeetRandom/odg.arch')
+    #
+    # dg = FactorArchitecture(dim=dim)
+    # print('starting dg')
+    # dg.diff_grouping(f, 0.001)
+    # dg.save_architecture('MeetRandom/dg.arch')
 
-    dg = FactorArchitecture(dim=dim)
-    print('starting dg')
-    dg.diff_grouping(f, 0.001)
-    dg.save_architecture('MeetRandom/architectures/dg.arch')
+    # print("Starting MEET IM")
+    # im = MEE(f, dim, 3000, 0, 0.001, 0.000001, use_mic_value=True)
+    # IM = im.get_IM()
+    # print("finished IM")
+    # meet = FactorArchitecture(dim=dim)
+    # meet.MEET(IM)
+    # print("finished MEET")
+    # meet.save_architecture("MeetRandom/meet.arch")
 
-    print("Starting MEET IM")
-    im = MEE(f, dim, 3000, 0, 0.001, 0.000001, use_mic_value=True)
-    IM = im.get_IM()
-    print("finished IM")
-    meet = FactorArchitecture(dim=dim)
-    meet.MEET(IM)
-    print("finished MEET")
-    meet.save_architecture("MeetRandom/meet.arch")
 
     fea_iter = 25
     pop_size = 1000
