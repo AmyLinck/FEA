@@ -25,9 +25,16 @@ class FEA:
             for alg in self.subpopulations:
                 # print('NEW SUBPOPULATION\n---------------------------------------------------------------')
                 alg.run()
+                if self.function.evals >= self.function.max_evals:
+                    print(f'Ending EARLY fea run {fea_run} \t {self.global_fitness}')
+                    return
             self.compete()
             self.share_solution()
             print('fea run ', fea_run, self.global_fitness)
+
+            if self.function.evals >= self.function.max_evals:
+                print(f'Ending EARLY fea run {fea_run} \t {self.global_fitness}')
+                return
 
     def set_global_solution(self, continuous):
         if continuous:
@@ -67,6 +74,7 @@ class FEA:
         sol = [x for x in self.global_solution]
         f = self.function
         curr_fitness = f.run(self.global_solution)
+        best_fitness = -1
         for var_idx in range(self.dim):
             best_value_for_var = sol[var_idx]
             for pop_idx in self.factor_architecture.optimizers[var_idx]:
@@ -76,13 +84,19 @@ class FEA:
                 var_candidate_value = position[pop_var_idx[0][0]]
                 sol[var_idx] = var_candidate_value
                 new_fitness = f.run(sol)
+                if new_fitness == -1:
+                    print("Max iter reached")
+                    break
+
                 if new_fitness < curr_fitness:
-                    print('smaller fitness found')
+                    # print('smaller fitness found')
                     curr_fitness = new_fitness
                     best_value_for_var = var_candidate_value
+                    best_fitness = new_fitness
             sol[var_idx] = best_value_for_var
+
         self.global_solution = sol
-        self.global_fitness = f.run(sol)
+        self.global_fitness = best_fitness
         self.solution_history.append(sol)
 
 
@@ -94,5 +108,5 @@ if __name__ == '__main__':
     fa = FactorArchitecture()
     fa.load_csv_architecture(file="../../results/factors/F1_m4_diff_grouping.csv", dim=50)
     func = Function(function_number=1, shift_data_file="f01_o.txt")
-    fea = FEA(func, fea_runs=100, generations=1000, pop_size=500, factor_architecture=fa, base_algorithm=PSO)
+    fea = FEA(func, fea_runs=10, generations=10, pop_size=50, factor_architecture=fa, base_algorithm=PSO)
     fea.run()

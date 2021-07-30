@@ -5,7 +5,7 @@ from copy import deepcopy, copy
 
 
 class Particle(object):
-    def __init__(self, f, size, position=None, factor=None, global_solution=None, lbest_pos=None):
+    def __init__(self, f, size, position=None, factor=None, global_solution=None, lbest_pos=None, fitness=None, lbest_fit=None):
         self.f = f
         self.lbest_fitness = float('inf')
         self.dim = size
@@ -16,9 +16,11 @@ class Particle(object):
         elif position is not None:
             self.position = position
             self.lbest_position = lbest_pos
-            self.lbest_fitness = self.calculate_fitness(global_solution, lbest_pos)
+            self.lbest_fitness = self.calculate_fitness(global_solution, lbest_pos) if lbest_fit is None else lbest_fit
         self.velocity = np.zeros(size)
-        self.fitness = self.calculate_fitness(global_solution)
+        self.fitness = self.calculate_fitness(global_solution) if fitness is None else fitness
+        if self.lbest_fitness == -1 or self.fitness == -1:
+            print("BAD PARTICLE")
 
     def __le__(self, other):
         if self.fitness is float:
@@ -50,6 +52,8 @@ class Particle(object):
 
     def update_individual_after_compete(self, global_solution=None):
         fitness = self.calculate_fitness(global_solution)
+        if fitness == -1:
+            return self
         if fitness < self.lbest_fitness:
             self.lbest_fitness = deepcopy(fitness)
         self.fitness = fitness
@@ -88,10 +92,17 @@ class Particle(object):
         self.velocity = np.array([self.clamp_value(v, -v_max, v_max) for v in new_velocity])
 
     def update_position(self, global_solution=None):
+        original_spot = self.position
+
         lo, hi = self.f.lbound, self.f.ubound
         position = self.velocity + self.position
         self.position = np.array([self.clamp_value(p, lo, hi) for p in position])
-        self.fitness = self.calculate_fitness(global_solution)
+        fitness = self.calculate_fitness(global_solution)
+        if fitness == -1:
+            print(f"Resetting position {self.position} --> {original_spot}")
+            self.position = original_spot
+        else:
+            self.fitness = fitness
 
     def clamp_value(self, to_clamp, lo, hi):
         if lo < to_clamp < hi:
@@ -127,7 +138,8 @@ class PSO(object):
     def find_current_best(self):
         sorted_ = sorted(np.array(self.pop), key=attrgetter('fitness'))
         return Particle(self.f, self.dim, position=sorted_[0].position, factor=self.factor,
-                 global_solution=self.global_solution, lbest_pos=sorted_[0].lbest_position)
+                 global_solution=self.global_solution, lbest_pos=sorted_[0].lbest_position,
+                        fitness=sorted_[0].fitness, lbest_fit=sorted_[0].lbest_fitness)
 
     def find_local_best(self):
         pass
@@ -150,8 +162,6 @@ class PSO(object):
         # find worst particle
         self.global_solution = np.array([x for x in global_solution])
         self.pop.sort(key=attrgetter('fitness'))
-        print('replacing')
-        print(self.pop[-1], self.pop[0])
         partial_solution = [x for i, x in enumerate(global_solution) if i in self.factor] # if i in self.factor
         self.pop[-1].set_position(partial_solution)
         self.pop[-1].set_fitness(self.f.run(self.global_solution))
@@ -165,7 +175,9 @@ class PSO(object):
         for i in range(self.generations):
             self.update_swarm()
             self.current_loop += 1
-            # print(self.gbest)
+            if self.f.evals >= self.f.max_evals:
+                print("MAX EVALS REACHED")
+                break
         return self.gbest.position
 
 

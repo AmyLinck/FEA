@@ -26,6 +26,8 @@ class Function(object):
         self.m_shift = m
         self.shift_data = None
         self.matrix_data = None
+        self.evals = 0
+        self.max_evals = 3000000
 
         if shift_data_file != "" and matrix_data_file == "":
             if 4 > function_number or (18 < function_number < 21):
@@ -37,6 +39,10 @@ class Function(object):
             self.shift_data = load_matrix_data__(shift_data_file)
 
     def run(self, solution):
+        self.evals += 1
+        if self.evals > self.max_evals:
+            return -1
+
         if self.dimensions == 0:
             self.dimensions = len(solution)
             # check_problem_size(self.dimensions)

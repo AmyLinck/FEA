@@ -120,7 +120,6 @@ class RandomTree(object):
             else:  # otherwise add the original one back
                 self.T.add_edge(remove[0], remove[1], weight=remove[2])
                 summary += "Rejected"
-        print(summary)
         return self.T
 
     def compute_interaction(self, i, j):
