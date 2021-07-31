@@ -182,6 +182,7 @@ class PSO(object):
                 print("\nMAX EVALS REACHED")
                 break
         # print(f"BEST PSO GEN: {self.best_gen}")
+        self.current_loop = 0  # reset it for pso counting
         return self.gbest.position
 
 
