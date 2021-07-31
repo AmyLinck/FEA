@@ -99,7 +99,7 @@ class Particle(object):
         self.position = np.array([self.clamp_value(p, lo, hi) for p in position])
         fitness = self.calculate_fitness(global_solution)
         if fitness == -1:
-            print(f"Resetting position {self.position} --> {original_spot}")
+            # print(f"Resetting position {self.position} --> {original_spot}")
             self.position = original_spot
         else:
             self.fitness = fitness
@@ -181,7 +181,7 @@ class PSO(object):
             if self.f.evals >= self.f.max_evals:
                 print("\nMAX EVALS REACHED")
                 break
-        print(f"BEST PSO GEN: {self.best_gen}")
+        # print(f"BEST PSO GEN: {self.best_gen}")
         return self.gbest.position
 
 

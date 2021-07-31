@@ -297,8 +297,8 @@ class FactorArchitecture(object):
             factors.sort(key=len)
             f1 = factors.pop(0)
             f2 = factors.pop(0)
-            new_f = f1 + f2
-            factors.append(new_f)
+            new_f = set(f1 + f2)
+            factors.append(list(new_f))
 
         self.factors = factors
 
