@@ -121,6 +121,7 @@ class PSO(object):
             file.write(str(pos))
             file.write('\n')
 
+
         self.omega = omega
         self.phi = phi
         self.f = function
@@ -156,6 +157,7 @@ class PSO(object):
         curr_best = self.find_current_best()
         self.pbest_history.append(curr_best)
         if curr_best.fitness < self.gbest.fitness:
+            self.best_gen = self.current_loop
             self.gbest = curr_best
 
     def replace_worst_solution(self, global_solution):
@@ -175,9 +177,11 @@ class PSO(object):
         for i in range(self.generations):
             self.update_swarm()
             self.current_loop += 1
+            # print(self.f.evals, end=', ')
             if self.f.evals >= self.f.max_evals:
-                print("MAX EVALS REACHED")
+                print("\nMAX EVALS REACHED")
                 break
+        print(f"BEST PSO GEN: {self.best_gen}")
         return self.gbest.position
 
 

@@ -41,6 +41,7 @@ class Function(object):
     def run(self, solution):
         self.evals += 1
         if self.evals > self.max_evals:
+            print(f"Max Evals Reached {self.evals}", end=", ")
             return -1
 
         if self.dimensions == 0:

@@ -8,6 +8,7 @@ class FEA:
             np.random.seed(seed)
 
         self.function = function
+        function.evals = 0
         self.fea_runs = fea_runs
         self.base_alg_iterations = generations
         self.pop_size = pop_size
@@ -19,22 +20,25 @@ class FEA:
         self.solution_history = []
         self.set_global_solution(continuous)
         self.subpopulations = self.initialize_factored_subpopulations()
+        self.sub_alg_runs = []
 
     def run(self):
         for fea_run in range(self.fea_runs):
             for alg in self.subpopulations:
                 # print('NEW SUBPOPULATION\n---------------------------------------------------------------')
                 alg.run()
+                self.sub_alg_runs.append(alg.best_gen)
                 if self.function.evals >= self.function.max_evals:
                     print(f'Ending EARLY fea run {fea_run} \t {self.global_fitness}')
-                    return
+                    return fea_run, self.sub_alg_runs
             self.compete()
             self.share_solution()
             print('fea run ', fea_run, self.global_fitness)
 
             if self.function.evals >= self.function.max_evals:
                 print(f'Ending EARLY fea run {fea_run} \t {self.global_fitness}')
-                return
+                return fea_run, self.sub_alg_runs
+        return self.fea_runs, self.sub_alg_runs
 
     def set_global_solution(self, continuous):
         if continuous:
@@ -74,7 +78,7 @@ class FEA:
         sol = [x for x in self.global_solution]
         f = self.function
         curr_fitness = f.run(self.global_solution)
-        best_fitness = -1
+        best_fitness = curr_fitness
         for var_idx in range(self.dim):
             best_value_for_var = sol[var_idx]
             for pop_idx in self.factor_architecture.optimizers[var_idx]:

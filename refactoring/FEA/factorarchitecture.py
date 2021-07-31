@@ -122,7 +122,7 @@ class FactorArchitecture(object):
             # initialize for current iteration
             curr_factor = [dimensions[0]]
 
-            curr_factor = self.check_delta(_function, m, 1, size, dimensions, epsilon, curr_factor, moo, n_obj)
+            curr_factor = self.check_delta(_function, m, curr_dim_idx, size, dimensions, epsilon, curr_factor, moo, n_obj)
 
             if len(curr_factor) == 1:
                 separate_variables.extend(curr_factor)
@@ -266,6 +266,39 @@ class FactorArchitecture(object):
             factor = list(T.neighbors(node))  # adjacent nodes
             factor.append(node)  # add itself to the group
             factors.append(factor)
+
+        self.factors = factors
+
+    def MEET2(self, T):
+        """
+        Create directed graph with edge weights in MIC table.
+        Directed graph (IM) can be calculated using different methods, called from variableinteraction class
+        Create MAXimal spanning tree from this graph.
+        :param T, T is either a directed graph stored as a numpy array, or a networkx graph object
+        :return:
+        """
+
+        if isinstance(T, np.ndarray):  # convert np array to tree
+            from networkx import  from_numpy_array, maximum_spanning_tree
+            G = from_numpy_array(T)
+            T = maximum_spanning_tree(G)
+
+        self.method = "MEET"
+        factors = []
+
+        print(f'Total weight: {T.size(weight="weight")}')
+
+        for node in list(T.nodes):  # each dimension
+            factor = list(T.neighbors(node))  # adjacent nodes
+            factor.append(node)  # add itself to the group
+            factors.append(factor)
+
+        while len(factors) > 500:  # shrink the number of factors!
+            factors.sort(key=len)
+            f1 = factors.pop(0)
+            f2 = factors.pop(0)
+            new_f = f1 + f2
+            factors.append(new_f)
 
         self.factors = factors
 
