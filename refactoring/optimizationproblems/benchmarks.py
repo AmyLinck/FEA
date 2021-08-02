@@ -28,7 +28,11 @@ def ackley__(solution=None):
 
 @numba.jit
 def schwefel__(solution=None):
-    return sum([sum(solution[:i]) ** 2 for i in range(0, len(solution))])
+    result = 0.0
+    for x in [sum(solution[:i]) ** 2 for i in range(0, len(solution))]:
+        result += x
+    # sum([sum(solution[:i]) ** 2 for i in range(0, len(solution))])
+    return result
 
 
 @numba.jit
