@@ -28,16 +28,16 @@ if __name__ == '__main__':
         f = Function(int(sys.argv[1]), shift_data_file=sys.argv[2])
     else:
         outputcsv = open('MeetRandom/tuning_200_f5.csv', 'a')
-        f = Function(19, shift_data_file="f19_o.txt")
+        f = Function(3, shift_data_file="f03_o.txt")
     print(f.function_to_call)
 
     random_iteration = [5, 45, 50, 100, 300, 500, 1000, 3000, 5000, 10000]  # 5, 50, 100, 200, 500, 1000, 2000, 5000, 10000
 
     dim = 1000
+    dg_epsilon = 0.001
 
     k = "epsilon, pop_size, MEET, MEET Fac, MEET Runs, MEET PSO, PSO"
     outputcsv.write(k + '\n')
-    dg_epsilon = 0.001
     s = time.time()
     print(dg_epsilon)
     f.evals = 0
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     print("finished MEET")
     meet.save_architecture(f"MeetRandom/{f.function_to_call}_meet")
 
-    for pop_size in [10, 25, 50]:
+    for pop_size in [50, 25, 100]:
         for trial in range(25):
             outputcsv.write(f'{dg_epsilon},{pop_size},')
             outputcsv.flush()
@@ -68,7 +68,7 @@ if __name__ == '__main__':
             outputcsv.write(f'{fea.global_fitness},{len(fa.factors)},{fea_run},{sum(pso_runs)/len(pso_runs)},')
             outputcsv.flush()
 
-            pso = PSO(generations=3000, population_size=pop_size, function=f, dim=dim)  # generations=3000
+            pso = PSO(generations=3000, population_size=1000, function=f, dim=dim)  # generations=3000
             gbest = pso.run()
             outputcsv.write(f'{pso.gbest.fitness}\n')
 

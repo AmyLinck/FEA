@@ -113,7 +113,7 @@ class Particle(object):
 
 
 class PSO(object):
-    def __init__(self, generations, population_size, function, dim, factor=None, global_solution=None, omega=0.729, phi=1.49618):
+    def __init__(self, generations, population_size, function, dim, factor=None, global_solution=None, omega=0.729, phi=1.49445):
         self.pop_size = population_size
         self.pop = [Particle(function, dim, factor=factor, global_solution=global_solution) for x in range(population_size)]
         pos = [p.position for p in self.pop]
