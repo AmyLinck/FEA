@@ -36,37 +36,37 @@ if __name__ == '__main__':
     dim = 1000
     dg_epsilon = 0.001
 
-    k = "epsilon, pop_size, MEET, MEET Fac, MEET Runs, MEET PSO, PSO"
+    k = "epsilon, pop_size, PSO"
     outputcsv.write(k + '\n')
     s = time.time()
     print(dg_epsilon)
     f.evals = 0
-    print("Starting MEET IM")
-    im = MEE(f, dim, 3000, 0, 0.001, 0.000001, use_mic_value=True)
-    IM = im.get_IM()
-    print("finished IM")
-    f.evals = 0
-    meet = FactorArchitecture(dim=dim)
-    meet.MEET(IM)
-    print("finished MEET")
-    meet.save_architecture(f"MeetRandom/{f.function_to_call}_meet")
+#    print("Starting MEET IM")
+#    im = MEE(f, dim, 3000, 0, 0.001, 0.000001, use_mic_value=True)
+#    IM = im.get_IM()
+#    print("finished IM")
+#    f.evals = 0
+#    meet = FactorArchitecture(dim=dim)
+#    meet.MEET(IM)
+#    print("finished MEET")
+#    meet.save_architecture(f"MeetRandom/{f.function_to_call}_meet")
 
     for pop_size in [50, 25, 100]:
         for trial in range(25):
             outputcsv.write(f'{dg_epsilon},{pop_size},')
             outputcsv.flush()
 
-            fa = FactorArchitecture()
-            fa.load_architecture(f"MeetRandom/{f.function_to_call}_meet")
-            print(f"DG {len(fa.factors)}")
+ #           fa = FactorArchitecture()
+ #           fa.load_architecture(f"MeetRandom/{f.function_to_call}_meet")
+ #           print(f"DG {len(fa.factors)}")
 
             f.evals = 0
-            fea = FEA(f, 50, 15, pop_size, fa, PSO, seed=trial)
-            fea_run, pso_runs = fea.run()
-            print(f"MEET, \t\t{fea.global_fitness}\n")
+#            fea = FEA(f, 50, 15, pop_size, fa, PSO, seed=trial)
+#            fea_run, pso_runs = fea.run()
+#            print(f"MEET, \t\t{fea.global_fitness}\n")
 
-            outputcsv.write(f'{fea.global_fitness},{len(fa.factors)},{fea_run},{sum(pso_runs)/len(pso_runs)},')
-            outputcsv.flush()
+#            outputcsv.write(f'{fea.global_fitness},{len(fa.factors)},{fea_run},{sum(pso_runs)/len(pso_runs)},')
+#            outputcsv.flush()
 
             pso = PSO(generations=3000, population_size=1000, function=f, dim=dim)  # generations=3000
             gbest = pso.run()
