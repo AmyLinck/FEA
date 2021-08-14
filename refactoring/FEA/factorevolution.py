@@ -3,7 +3,7 @@ import numpy as np
 
 class FEA:
     def __init__(self, function, fea_runs, generations, pop_size, factor_architecture, base_algorithm, continuous=True,
-                 seed=None):
+                 seed=None, log_file=None):
         if seed is not None:
             np.random.seed(seed)
 
@@ -21,9 +21,12 @@ class FEA:
         self.set_global_solution(continuous)
         self.subpopulations = self.initialize_factored_subpopulations()
         self.sub_alg_runs = []
+        self.log_file = log_file
 
     def run(self):
         for fea_run in range(self.fea_runs):
+            if self.log_file is not None:
+                self.log_file.write(f'{fea_run}, {self.global_fitness}\n')
             for alg in self.subpopulations:
                 # print('NEW SUBPOPULATION\n---------------------------------------------------------------')
                 alg.run()
