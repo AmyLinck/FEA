@@ -106,7 +106,7 @@ class FactorArchitecture(object):
 
     def single_grouping(self):
         self.method = "single"
-        self.factors = [i for i in range(self.dim)]
+        self.factors = [[i] for i in range(self.dim)]
 
     def diff_grouping(self, _function, epsilon, m=0, moo=False, n_obj=np.inf):
         """
