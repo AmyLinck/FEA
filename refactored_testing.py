@@ -16,7 +16,13 @@ def output_callback(output_file, fea, fea_run):
     output_file.write(f" , , {fea_run}, {fea.global_fitness}\n")
     output_file.flush()
 
-
+def average_factors(fa: FactorArchitecture):
+    print(len(fa.factors))
+    size = 0
+    for f in fa.factors:
+        size += len(f)
+    print(size / len(fa.factors))
+    return len(fa.factors), size / len(fa.factors)
 
 if __name__ == '__main__':
     dim = 1000
@@ -34,18 +40,13 @@ if __name__ == '__main__':
 
     print(f.function_to_call)
 
-    dg_file = open(f'MeetRandom/Graph_{f.function_to_call}_DG', 'a')
-    single_file = open(f'MeetRandom/Graph_{f.function_to_call}_Single.csv', 'a')
-    odg_file = open(f'MeetRandom/Graph_{f.function_to_call}_ODG.csv', 'a')
-    tree_file = open(f'MeetRandom/Graph_{f.function_to_call}_tree.csv', 'a')
-    tree2_file = open(f'MeetRandom/Graph_{f.function_to_call}_tree2.csv', 'a')
-
-    random_iteration = [5, 45, 50, 100, 300, 500, 1000, 3000, 5000, 10000]  # 5, 50, 100, 200, 500, 1000, 2000, 5000, 10000
+    dg_file = open(f'MeetRandom/Graph2_{f.function_to_call}_DG.csv', 'a')
+    odg_file = open(f'MeetRandom/Graph2_{f.function_to_call}_ODG.csv', 'a')
 
     dim = 1000
     dg_epsilon = 0.001
 
-    k = "epsilon, pop_size, DG, DG Fac, DG Runs, DG PSO, Single, Single Fac, Single Runs, Single PSO, ODG, ODG Fac, ODG Runs, ODG PSO, Tree, Tree fac, Tree Runs, Tree PSO, Tree2, Tree2 fac, Tree2 Runs, Tree2 PSO, PSO"
+    k = "epsilon, pop_size, DG, DG Fac, DG Runs, DG PSO, ODG, ODG Fac, ODG Runs, ODG PSO"
     outputcsv.write(k + '\n')
     s = time.time()
     print(dg_epsilon)
@@ -61,24 +62,24 @@ if __name__ == '__main__':
     dg.diff_grouping(f, dg_epsilon)
     dg.save_architecture(f'MeetRandom/{f.function_to_call}_dg')
 
-    ccea = FactorArchitecture(dim=dim)
-    print('starting single')
-    f.evals = 0
-    ccea.single_grouping()
-    ccea.save_architecture(f'MeetRandom/{f.function_to_call}_single')
-
-    im = RandomTree(f, dim, 3000, dg_epsilon, 0.000001)
-
-    print('starting random')
-    T = im.run(5)
-    print("finished Random ")
-    meet = FactorArchitecture(dim=dim)
-    meet.MEET(T)
-    meet.save_architecture(f"MeetRandom/{f.function_to_call}_rand")
-
-    meet2 = FactorArchitecture(dim=dim)
-    meet2.MEET2(T)
-    meet2.save_architecture(f"MeetRandom/{f.function_to_call}_2_rand")
+    # ccea = FactorArchitecture(dim=dim)
+    # print('starting single')
+    # f.evals = 0
+    # ccea.single_grouping()
+    # ccea.save_architecture(f'MeetRandom/{f.function_to_call}_single')
+    #
+    # im = RandomTree(f, dim, 3000, dg_epsilon, 0.000001)
+    #
+    # print('starting random')
+    # T = im.run(5)
+    # print("finished Random ")
+    # meet = FactorArchitecture(dim=dim)
+    # meet.MEET(T)
+    # meet.save_architecture(f"MeetRandom/{f.function_to_call}_rand")
+    #
+    # meet2 = FactorArchitecture(dim=dim)
+    # meet2.MEET2(T)
+    # meet2.save_architecture(f"MeetRandom/{f.function_to_call}_2_rand")
 
     for pop_size in [10]:
         for trial in range(25):
@@ -98,18 +99,6 @@ if __name__ == '__main__':
             outputcsv.flush()
 
             fa = FactorArchitecture()
-            fa.load_architecture(f"MeetRandom/{f.function_to_call}_single")
-            print(f"Single {len(fa.factors)}")
-
-            f.evals = 0
-            fea = FEA(f, 50, 15, pop_size, fa, PSO, seed=trial, log_file=single_file)
-            fea_run, pso_runs = fea.run()
-            print(f"Single, \t\t{fea.global_fitness}\n")
-
-            outputcsv.write(f'{fea.global_fitness},{len(fa.factors)},{fea_run},{sum(pso_runs) / len(pso_runs)},')
-            outputcsv.flush()
-
-            fa = FactorArchitecture()
             fa.load_architecture(f"MeetRandom/{f.function_to_call}_odg")
             print(f"ODG {len(fa.factors)}")
 
@@ -118,37 +107,8 @@ if __name__ == '__main__':
             fea_run, pso_runs = fea.run()
             print(f"ODG, \t\t{fea.global_fitness}\n")
 
-            outputcsv.write(f'{fea.global_fitness},{len(fa.factors)},{fea_run},{sum(pso_runs) / len(pso_runs)},')
+            outputcsv.write(f'{fea.global_fitness},{len(fa.factors)},{fea_run},{sum(pso_runs) / len(pso_runs)}\n')
             outputcsv.flush()
-
-            fa = FactorArchitecture()
-            fa.load_architecture(f"MeetRandom/{f.function_to_call}_rand")
-            print(f"Rand {len(fa.factors)}")
-
-            f.evals = 0
-            fea = FEA(f, 50, 15, pop_size, fa, PSO, seed=trial, log_file=tree_file)
-            fea_run, pso_runs = fea.run()
-            print(f"Rand, \t\t{fea.global_fitness}\n")
-
-            outputcsv.write(f'{fea.global_fitness},{len(fa.factors)},{fea_run},{sum(pso_runs) / len(pso_runs)},')
-            outputcsv.flush()
-
-            fa = FactorArchitecture()
-            fa.load_architecture(f"MeetRandom/{f.function_to_call}_2_rand")
-            print(f"Rand {len(fa.factors)}")
-
-            f.evals = 0
-            fea = FEA(f, 50, 15, pop_size, fa, PSO, seed=trial, log_file=tree2_file)
-            fea_run, pso_runs = fea.run()
-            print(f"Rand, \t\t{fea.global_fitness}\n")
-
-            outputcsv.write(f'{fea.global_fitness},{len(fa.factors)},{fea_run},{sum(pso_runs) / len(pso_runs)},')
-            outputcsv.flush()
-
-            f.evals = 0
-            pso = PSO(generations=3000, population_size=1000, function=f, dim=dim)  # generations=3000
-            gbest = pso.run()
-            outputcsv.write(f'{pso.gbest.fitness}\n')
 
 
         # print("PSO")
