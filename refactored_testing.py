@@ -16,7 +16,13 @@ def output_callback(output_file, fea, fea_run):
     output_file.write(f" , , {fea_run}, {fea.global_fitness}\n")
     output_file.flush()
 
-
+def average_factors(fa: FactorArchitecture):
+    print(len(fa.factors))
+    size = 0
+    for f in fa.factors:
+        size += len(f)
+    print(size / len(fa.factors))
+    return len(fa.factors), size / len(fa.factors)
 
 if __name__ == '__main__':
     dim = 1000
