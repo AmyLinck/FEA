@@ -27,6 +27,7 @@ class FEA:
         for fea_run in range(self.fea_runs):
             if self.log_file is not None:
                 self.log_file.write(f'{fea_run}, {self.global_fitness}\n')
+                self.log_file.flush()
             for alg in self.subpopulations:
                 # print('NEW SUBPOPULATION\n---------------------------------------------------------------')
                 alg.run()
