@@ -1,6 +1,7 @@
 import numpy as np
 from numba import jit
 import scipy as sp
+from ast import literal_eval
 
 try:
     import _pickle as pickle
@@ -82,6 +83,19 @@ class FactorArchitecture(object):
 
         self.get_factor_topology_elements()
 
+    def load_txt_architecture(self, file, dim=1000):
+        if isinstance(file, str):
+            file = open(file)
+        text = file.readline()  # get the factor info (assume it is on first line)
+        res = literal_eval(text)
+        print(res[0])
+        factors = res
+        factors = [list(f) for f in factors]
+        print(factors)
+        self.factors = factors
+        self.dim = dim
+        self.get_factor_topology_elements()
+
     def load_csv_architecture(self, file, dim, method=""):
         from refactoring.utilities.CSVreader import CSVReader
 
@@ -126,12 +140,13 @@ class FactorArchitecture(object):
             # initialize for current iteration
             curr_factor = [dimensions[0]]
 
-            curr_factor = self.check_delta(_function, m, curr_dim_idx, size, dimensions, epsilon, curr_factor, moo, n_obj)
+            curr_factor = self.check_delta(_function, m, curr_dim_idx, size, dimensions, epsilon, curr_factor,
+                                           moo, n_obj, False)
 
             if len(curr_factor) == 1:
                 separate_variables.extend(curr_factor)
             else:
-                factors.append(tuple(curr_factor))
+                factors.append(curr_factor)
 
             # Final adjustments
             indeces_to_delete = np.searchsorted(dimensions, curr_factor)
@@ -142,7 +157,8 @@ class FactorArchitecture(object):
 
             loop += 1
         if len(separate_variables) != 0:
-            factors.append(tuple(separate_variables))
+            for x in separate_variables:
+                factors.append([x])
 
         self.factors = factors
 
@@ -172,10 +188,14 @@ class FactorArchitecture(object):
 
             loop += 1
 
-        factors.append(tuple(separate_variables))
+        if len(separate_variables) != 0:
+            print("SEPARATE VARIABLES EXISTTTT")
+            for x in separate_variables:
+                factors.append([x])
+
         self.factors = factors
 
-    def check_delta(self, _function, m, i, size, dimensions, eps, curr_factor, moo=False, n_obj=np.inf):
+    def check_delta(self, _function, m, i, size, dimensions, eps, curr_factor, moo=False, n_obj=np.inf, is_odg=True):
         """
         Helper function for the two differential grouping approaches.
         Compares function fitnesses to determine whether there is a difference in results larger than 'epsilon'.
@@ -186,6 +206,7 @@ class FactorArchitecture(object):
         :param dimensions:
         :param eps:
         :param curr_factor:
+        :param is_odg:
         :return curr_factor:
         """
         p1 = np.multiply(_function.lbound, np.ones(self.dim))  # python does weird things if you set p2 = p1
@@ -200,7 +221,9 @@ class FactorArchitecture(object):
             delta1 = _function.run(p1, i=n_obj) - _function.run(p2, i=n_obj)
         self.function_evaluations += 2
 
-        for j in range(i + 1, size):
+        iterable = range(i + 1, size) if is_odg else range(1, size)
+
+        for j in iterable:
             p3 = np.multiply(_function.lbound, np.ones(self.dim))
             p4 = np.multiply(_function.lbound, np.ones(self.dim))
             p4[i] = _function.ubound

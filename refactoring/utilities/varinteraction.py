@@ -1,5 +1,5 @@
 import numpy as np
-from minepy import MINE
+# from minepy import MINE
 from networkx import from_numpy_array, maximum_spanning_tree, connected_components
 from random import choice
 
