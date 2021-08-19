@@ -88,7 +88,7 @@ if __name__ == '__main__':
     for pop_size in [10]:
         for trial in range(10):
             outputcsv.write(f'{dg_epsilon},{pop_size},')
-            outputcsv.flush()
+            #outputcsv.flush()
 
             fa = FactorArchitecture()
             fa.load_architecture(f"MeetRandom/{f.function_to_call}_dg")
@@ -100,7 +100,7 @@ if __name__ == '__main__':
             print(f"DG, \t\t{fea.global_fitness}\n")
 
             outputcsv.write(f'{fea.global_fitness},{len(fa.factors)},{fea_run},{sum(pso_runs) / len(pso_runs)},')
-            outputcsv.flush()
+            #outputcsv.flush()
 
             fa = FactorArchitecture()
             fa.load_architecture(f"MeetRandom/{f.function_to_call}_odg")
@@ -112,7 +112,7 @@ if __name__ == '__main__':
             print(f"ODG, \t\t{fea.global_fitness}\n")
 
             outputcsv.write(f'{fea.global_fitness},{len(fa.factors)},{fea_run},{sum(pso_runs) / len(pso_runs)},')
-            outputcsv.flush()
+            #outputcsv.flush()
 
             fa = FactorArchitecture()
             fa.load_architecture(f"MeetRandom/{f.function_to_call}_single")
@@ -124,10 +124,10 @@ if __name__ == '__main__':
             print(f"ODG, \t\t{fea.global_fitness}\n")
 
             outputcsv.write(f'{fea.global_fitness},{len(fa.factors)},{fea_run},{sum(pso_runs) / len(pso_runs)},')
-            outputcsv.flush()
+            #outputcsv.flush()
 
             fa = FactorArchitecture()
-            fa.load_architecture(f"MeetRandom/{f.function_to_call}_tree")
+            fa.load_architecture(f"MeetRandom/{f.function_to_call}_rand")
             print(f"ODG {len(fa.factors)}")
 
             f.evals = 0
@@ -136,10 +136,10 @@ if __name__ == '__main__':
             print(f"ODG, \t\t{fea.global_fitness}\n")
 
             outputcsv.write(f'{fea.global_fitness},{len(fa.factors)},{fea_run},{sum(pso_runs) / len(pso_runs)},')
-            outputcsv.flush()
+            #outputcsv.flush()
 
             fa = FactorArchitecture()
-            fa.load_architecture(f"MeetRandom/{f.function_to_call}_odg")
+            fa.load_architecture(f"MeetRandom/{f.function_to_call}_2_rand")
             print(f"ODG {len(fa.factors)}")
 
             f.evals = 0
