@@ -113,7 +113,8 @@ class Particle(object):
 
 
 class PSO(object):
-    def __init__(self, generations, population_size, function, dim, factor=None, global_solution=None, omega=0.729, phi=1.49445):
+    def __init__(self, generations, population_size, function, dim, factor=None, global_solution=None, omega=0.729,
+                 phi=1.49445):
         self.pop_size = population_size
         self.pop = [Particle(function, dim, factor=factor, global_solution=global_solution) for x in range(population_size)]
         pos = [p.position for p in self.pop]
@@ -173,7 +174,7 @@ class PSO(object):
         if curr_best.fitness < self.gbest.fitness:
             self.gbest = curr_best
 
-    def run(self):
+    def run(self, logfile=None):
         for i in range(self.generations):
             self.update_swarm()
             self.current_loop += 1
@@ -181,6 +182,9 @@ class PSO(object):
             if self.f.evals >= self.f.max_evals:
                 print("\nMAX EVALS REACHED")
                 break
+
+            if logfile is not None:
+                logfile.write(f'{self.current_loop}, {self.gbest.fitness}\n')
         # print(f"BEST PSO GEN: {self.best_gen}")
         self.current_loop = 0  # reset it for pso counting
         return self.gbest.position
