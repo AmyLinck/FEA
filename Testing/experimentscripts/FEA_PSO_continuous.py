@@ -1,4 +1,4 @@
-from optimizationproblems.continuous_functions import Function
+from optimizationproblems.continuous_functions import BenchmarkFunction
 from FEA.varinteraction import MEE, RandomTree
 from FEA.factorevolution import FEA
 from FEA.factorarchitecture import FactorArchitecture
@@ -28,13 +28,13 @@ if __name__ == '__main__':
     # arguments are used to pass through which function to use, the relevant shift data file, and the matrix data file if present
     if len(sys.argv) == 4:
         outputcsv = open(f'./MeetRandom/Experiment_{dim}_f{int(sys.argv[1])}.csv', 'a')
-        f = Function(int(sys.argv[1]), shift_data_file=sys.argv[2], matrix_data_file=sys.argv[3])
+        f = BenchmarkFunction(int(sys.argv[1]), shift_data_file=sys.argv[2], matrix_data_file=sys.argv[3])
     elif len(sys.argv) == 3:
         outputcsv = open(f'./MeetRandom/Experiment_{dim}_f{int(sys.argv[1])}.csv', 'a')
-        f = Function(int(sys.argv[1]), shift_data_file=sys.argv[2])
+        f = BenchmarkFunction(int(sys.argv[1]), shift_data_file=sys.argv[2])
     else:
         # Option to manually adjust file names if you don't want to use cmdline args, currently looking at CEC2018 Function 20
-        f = Function(20, shift_data_file="f20_o.txt")
+        f = BenchmarkFunction(20, shift_data_file="f20_o.txt")
         outputcsv = open('MeetRandom/Experiment_1000_f20_thing.csv', 'a')
     print(f.function_to_call)
 

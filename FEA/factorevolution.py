@@ -92,11 +92,11 @@ class FEA:
 
 if __name__ == '__main__':
     from basealgorithms.pso import PSO
-    from optimizationproblems.continuous_functions import Function
+    from optimizationproblems.continuous_functions import BenchmarkFunction
     from FEA.factorarchitecture import FactorArchitecture
 
     fa = FactorArchitecture()
     fa.load_csv_architecture(file="../../results/factors/F1_m4_diff_grouping.csv", dim=50)
-    func = Function(function_number=1, shift_data_file="f01_o.txt")
+    func = BenchmarkFunction(function_number=1, shift_data_file="f01_o.txt")
     fea = FEA(func, fea_runs=100, generations=1000, pop_size=500, factor_architecture=fa, base_algorithm=PSO)
     fea.run()
