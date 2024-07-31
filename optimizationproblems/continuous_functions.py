@@ -157,7 +157,7 @@ class BenchmarkFunction(object):
         if matrix_data is None:
             if matrix_data_file == "":
                 import scipy.stats
-                self.matrix_data = scipy.stats.special_ortho_group(dim=self.dimensions, seed=self.nprandom).rvs()
+                self.matrix_data = scipy.stats.special_ortho_group(dim=self.m_group, seed=self.nprandom).rvs()
                 #np.linalg.qr(np.random.random((self.dimensions,self.dimensions)), mode='complete')
             else:
                 from opfunu.cec.cec2010.utils import load_matrix_data__
