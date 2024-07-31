@@ -34,7 +34,6 @@ class BenchmarkFunction(object):
     def default_dimension(function_number):
         return 1000
 
-
     # "m" = m_shift
     @staticmethod
     def default_group_size(function_number,N):
@@ -80,13 +79,13 @@ class BenchmarkFunction(object):
     
         self.function_to_call = 'F'+str(function_number)
         self.derivative_to_call = 'D'+str(function_number)
-        self.function_call = getattr(self, self.function_to_call)
+        self.function_call = getattr(BenchmarkFunction, self.function_to_call)
         # self.derivative_call = getattr(self, self.derivative_to_call)
 
         # Set default benchmark function parameters
         self.dimensions = self.default_dimension(self.function_number)
         self.lbound, self.ubound = self.default_bounds(self.function_number)
-        self.m_shift = self.default_group_size(self.function_number, self.dimensions)
+        self.m_group = self.default_group_size(self.function_number, self.dimensions)
         self.name = self.function_name(self.function_number)
 
         # Override default benchmark values
@@ -101,7 +100,7 @@ class BenchmarkFunction(object):
                 raise ValueError("lbound and rbound must be specified")
 
         if "m" in kwargs:
-            self.m_shift = kwargs["m"]
+            self.m_group = kwargs["m"]
 
 
         # Instance of random to generate random shift and random permutation
@@ -157,11 +156,15 @@ class BenchmarkFunction(object):
 
         if matrix_data is None:
             if matrix_data_file == "":
-                import scipy
-                self.matrix_data = scipy.stats.special_ortho_group(self.dimensions, seed=self.nprandom)
+                import scipy.stats
+                self.matrix_data = scipy.stats.special_ortho_group(dim=self.dimensions, seed=self.nprandom).rvs()
+                #np.linalg.qr(np.random.random((self.dimensions,self.dimensions)), mode='complete')
             else:
                 from opfunu.cec.cec2010.utils import load_matrix_data__
                 self.matrix_data = load_matrix_data__(matrix_data_file)
+
+        self.matrix_data = np.copy(self.matrix_data[:self.m_group, :self.m_group])
+        self.shift_data = np.copy(self.shift_data[:self.dimensions])
             
         if self.permu_data is None:
             self.permu_data = self.nprandom.permutation(self.dimensions)
@@ -170,16 +173,24 @@ class BenchmarkFunction(object):
         # with self.counter_lock:
         self.function_evaluations = 0
 
-    def run(self, solution):
+    def counter(self):
+        return self.function_evaluations # if using counter class
+    
+    def count(self):
+        return self.function_evaluations
+    
+    def add_counter(self,add=1):
+        self.function_evaluations += add
+
+    def run(self, solution) -> np.ndarray :
         # with self.counter_lock:
         self.function_evaluations += 1
         if self.dimensions == 0:
             self.dimensions = len(solution)
             # check_problem_size(self.dimensions)
-        return self.function_call(solution=solution)
+        return self.function_call(solution, self.shift_data, self.permu_data, self.matrix_data, self.m_group, self.dimensions)
 
     def grad_estimate(self,solution,factor=None):
-        from gradient_estimation import GradientEstimate # Inefficient if placed here
 
         if factor is None:
             self.factor = list(range(0,self.dimensions))
@@ -207,89 +218,62 @@ class BenchmarkFunction(object):
         return self.shift_data, self.permu_data
 
     # Test
-    def F0(self, solution=None):
+    @numba.jit(nopython=True)
+    def F0(solution, shift_data, permu_data, matrix_data, m_group, dim):
         s = np.sum(solution**2)
         return s
 
     # def F1(self, solution=None, name="Shifted Elliptic Function"):
-    def F1(self, solution=None):
-        z = solution - self.shift_data[:self.dimensions]
-        return elliptic__(z,dim=self.dimensions)
+    @numba.jit(nopython=True)
+    def F1(solution, shift_data, permu_data, matrix_data, m_group, dim):
+        z = solution - shift_data
+        return elliptic__(z)
 
     # def F2(self, solution=None, name="Shifted Rastrigin’s Function"):
-    def F2(self, solution=None):
-        z = solution - self.shift_data[:self.dimensions]
+    @numba.jit(nopython=True)
+    def F2(solution, shift_data, permu_data, matrix_data, m_group, dim):
+        z = solution - shift_data
         return rastrigin__(z)
-
+    
     # def F3(self, solution=None, name="Shifted Ackley’s Function"):
-    def F3(self, solution=None):
-        z = solution - self.shift_data[:self.dimensions]
+    @numba.jit(nopython=True)
+    def F3(solution, shift_data, permu_data, matrix_data, m_group, dim):
+        z = solution - shift_data
         return ackley__(z)
     
     #def F4(self, solution=None, name="Single-group Shifted and m-rotated Elliptic Function", m_group=50):
-    def F4(self, solution=None):
-        m_group = self.m_shift
-        shift_data, permu_data = self.shift_data, self.perm_data
+    @numba.jit(nopython=True)
+    def F4(solution, shift_data, permu_data, matrix_data, m_group, dim):
         z = solution - shift_data
         idx1 = permu_data[:m_group]
         idx2 = permu_data[m_group:]
-        z_rot_elliptic = dot(z[idx1], self.matrix_data[:m_group, :m_group])
+        z_rot_elliptic = dot(z[idx1], matrix_data)
         z_elliptic = z[idx2]
         return elliptic__(z_rot_elliptic) * 10**6 + elliptic__(z_elliptic)
-    
-    # f(g(x))=f'(g(x))g'(x) = df_dg * dg_dxmatrix_data
-    
-    # def D4(self, solution=None, name="Single-group Shifted and m-rotated Elliptic Function", m_group=50):
-        # self.name = name
-        # shift_data, permu_data = self.shift_data, self.perm_data
-        # idx1 = permu_data[:m_group]
-        # idx2 = permu_data[m_group:]
-
-        # z = solution - shift_data
-
-        # M = self.matrix_data[:m_group, :m_group]
-        # z_rot_elliptic = dot(z[idx1], self.matrix_data[:m_group, :m_group])
-        # z_elliptic = z[idx2]
-
-        # ## UNPERMUTATE and RECOMBINE
-        # df_dg = d_elliptic__(z_rot_elliptic)*np.transpose() * 10**6 + d_elliptic__(z_elliptic)
-        # dg_dx = 
-
-        # return dg_dx
-        
-    
-
 
     #def F5(self, solution=None, name="Single-group Shifted and m-rotated Rastrigin’s Function", m_group=50):
-    def F5(self, solution=None):
-        m_group = self.m_shift
-        shift_data, permu_data = self.shift_data, self.permu_data
+    @numba.jit(nopython=True)
+    def F5(solution, shift_data, permu_data, matrix_data, m_group, dim):
         z = solution - shift_data
         idx1 = permu_data[:m_group]
         idx2 = permu_data[m_group:]
-        z_rot_rastrigin = dot(z[idx1], self.matrix_data[:m_group, :m_group])
+        z_rot_rastrigin = dot(z[idx1], matrix_data)
         z_rastrigin = z[idx2]
         return rastrigin__(z_rot_rastrigin) * 10 ** 6 + rastrigin__(z_rastrigin)
 
-    # def D5(self,solution=None):
-    # 	grad_tanh = grad(self.F5)
-    # 	return grad_tanh(solution)
-    
     #def F6(self, solution=None, name="Single-group Shifted and m-rotated Ackley’s Function", m_group=50):
-    def F6(self, solution=None):
-        m_group = self.m_shift
-        shift_data, permu_data = self.shift_data, self.perm_data
+    @numba.jit(nopython=True)
+    def F6(solution, shift_data, permu_data, matrix_data, m_group, dim):
         z = solution - shift_data
         idx1 = permu_data[:m_group]
         idx2 = permu_data[m_group:]
-        z_rot_ackley = dot(z[idx1], self.matrix_data[:m_group, :m_group])
+        z_rot_ackley = dot(z[idx1], matrix_data)
         z_ackley = z[idx2]
         return ackley__(z_rot_ackley) * 10 ** 6 + ackley__(z_ackley)
        
     # def F7(self, solution=None, name="Single-group Shifted m-dimensional Schwefel’s Problem 1.2", m_group=50):
-    def F7(self, solution=None):
-        m_group = self.m_shift
-        shift_data, permu_data = self.shift_data, self.perm_data
+    @numba.jit(nopython=True)
+    def F7(solution, shift_data, permu_data, matrix_data, m_group, dim):
         z = solution - shift_data
         idx1 = permu_data[:m_group]
         idx2 = permu_data[m_group:]
@@ -298,9 +282,8 @@ class BenchmarkFunction(object):
         return schwefel__(z_schwefel) * 10 ** 6 + sphere__(z_shpere)
       
     # def F8(self, solution=None, name=" Single-group Shifted m-dimensional Rosenbrock’s Function", m_group=50):
-    def F8(self, solution=None):
-        m_group = self.m_shift
-        shift_data, permu_data = self.shift_data, self.perm_data
+    @numba.jit(nopython=True)
+    def F8(solution, shift_data, permu_data, matrix_data, m_group, dim):
         z = solution - shift_data
         idx1 = permu_data[:m_group]
         idx2 = permu_data[m_group:]
@@ -309,170 +292,159 @@ class BenchmarkFunction(object):
         return rosenbrock__(z_rosenbrock) * 10 ** 6 + sphere__(z_sphere)
       
     # def F9(self, solution=None, name="D/2m-group Shifted and m-rotated Elliptic Function", m_group=50):
-    def F9(self, solution=None):
-        m_group = self.m_shift
-        epoch = int(self.dimensions / (2 * m_group))
+    @numba.jit(nopython=True)
+    def F9(solution, shift_data, permu_data, matrix_data, m_group, dim):
+        epoch = int(dim / (2 * m_group))
         # check_m_group("F9", self.dimensions, 2*m_group)
-        shift_data, permu_data = self.shift_data, self.perm_data
         z = solution - shift_data
         result = 0.0
         for i in range(0, epoch):
-            idx1 = permu_data[i*m_group:(i+1)*m_group]
-            z1 = dot(z[idx1], self.matrix_data[:len(idx1), :len(idx1)])
-            result += elliptic__(z1)
-        idx2 = permu_data[int(self.dimensions/2):self.dimensions]
-        z2 = z[idx2]
-        result += elliptic__(z2)
+            idx = permu_data[i*m_group:(i+1)*m_group]
+            result += elliptic__(dot(z[idx],matrix_data))
+        idx2 = permu_data[int(dim/2):dim]
+        result += elliptic__(z[idx2])
         return result
        
     # def F10(self, solution=None, name="D/2m-group Shifted and m-rotated Rastrigin’s Function", m_group=50):
-    def F10(self, solution=None):
-        m_group = self.m_shift
-        epoch = int(self.dimensions / (2 * m_group))
+    @numba.jit(nopython=True)
+    def F10(solution, shift_data, permu_data, matrix_data, m_group, dim):
+        epoch = int(dim / (2 * m_group))
         # check_m_group("F10", self.dimensions, 2*m_group)
-        shift_data, permu_data = self.shift_data, self.perm_data
         z = solution - shift_data
         result = 0.0
         for i in range(0, epoch):
-            idx1 = permu_data[i * m_group:(i + 1) * m_group]
-            z1 = dot(z[idx1], self.matrix_data[:len(idx1), :len(idx1)])
-            result += rastrigin__(z1)
-        idx2 = permu_data[int(self.dimensions / 2):self.dimensions]
-        z2 = z[idx2]
-        result += rastrigin__(z2)
+            idx = permu_data[i * m_group:(i + 1) * m_group]
+            result += rastrigin__(dot(z[idx],matrix_data))
+        idx2 = permu_data[int(dim / 2):dim]
+        result += rastrigin__(z[idx2])
         return result
      
     # def F11(self, solution=None, name="D/2m-group Shifted and m-rotated Ackley’s Function", m_group=50):
-    def F11(self, solution=None):
-        m_group = self.m_shift
-        epoch = int(self.dimensions / (2 * m_group))
+    @numba.jit(nopython=True)
+    def F11(solution, shift_data, permu_data, matrix_data, m_group, dim):
+        epoch = int(dim / (2 * m_group))
         # check_m_group("F11", self.dimensions, 2*m_group)
-        shift_data, permu_data = self.shift_data, self.perm_data
         z = solution - shift_data
         result = 0.0
         for i in range(0, epoch):
-            idx1 = permu_data[i * m_group:(i + 1) * m_group]
-            z1 = dot(z[idx1], self.matrix_data[:len(idx1), :len(idx1)])
-            result += ackley__(z1)
-        idx2 = permu_data[int(self.dimensions / 2):self.dimensions]
-        z2 = z[idx2]
-        result += ackley__(z2)
+            idx = permu_data[i * m_group:(i + 1) * m_group]
+            result += ackley__(dot(z[idx],matrix_data))
+        idx2 = permu_data[int(dim / 2):dim]
+        result += ackley__(z[idx2])
         return result
       
     # def F12(self, solution=None, name="D/2m-group Shifted m-dimensional Schwefel’s Problem 1.2", m_group=50):
-    def F12(self, solution=None):
-        m_group = self.m_shift
-        epoch = int(self.dimensions / (2 * m_group))
+    @numba.jit(nopython=True)
+    def F12(solution, shift_data, permu_data, matrix_data, m_group, dim):
+        epoch = int(dim / (2 * m_group))
         # check_m_group("F12", self.dimensions, 2*m_group)
-        shift_data, permu_data = self.shift_data, self.perm_data
         z = solution - shift_data
         result = 0.0
         for i in range(0, epoch):
-            idx1 = permu_data[i * m_group:(i + 1) * m_group]
-            result += schwefel__(z[idx1])
-        idx2 = permu_data[int(self.dimensions / 2):self.dimensions]
+            idx = permu_data[i * m_group:(i + 1) * m_group]
+            result += schwefel__(z[idx])
+        idx2 = permu_data[int(dim / 2):dim]
         result += sphere__(z[idx2])
         return result
       
     # def F13(self, solution=None, name="D/2m-group Shifted m-dimensional Rosenbrock’s Function", m_group=50):
-    def F13(self, solution=None):
-        m_group = self.m_shift
-        epoch = int(self.dimensions / (2 * m_group))
+    @numba.jit(nopython=True)
+    def F13(solution, shift_data, permu_data, matrix_data, m_group, dim):
+        epoch = int(dim / (2 * m_group))
         # check_m_group("F13", self.dimensions, 2*m_group)
-        shift_data, permu_data = self.shift_data, self.perm_data
         z = solution - shift_data
         result = 0.0
         for i in range(0, epoch):
-            idx1 = permu_data[i * m_group:(i + 1) * m_group]
-            result += rosenbrock__(z[idx1])
-        idx2 = permu_data[int(self.dimensions / 2):self.dimensions]
+            idx = permu_data[i * m_group:(i + 1) * m_group]
+            result += rosenbrock__(z[idx])
+        idx2 = permu_data[int(dim / 2):dim]
         result += sphere__(z[idx2])
         return result
      
     # def F14(self, solution=None, name="D/2m-group Shifted and m-rotated Elliptic Function", m_group=50):
-    def F14(self, solution=None):
-        m_group = self.m_shift
-        epoch = int(self.dimensions / m_group)
+    @numba.jit(nopython=True)
+    def F14(solution, shift_data, permu_data, matrix_data, m_group, dim):
+        epoch = int(dim / m_group)
         # check_m_group("F14", self.dimensions, m_group)
-        shift_data, permu_data = self.shift_data, self.perm_data
         z = solution - shift_data
         result = 0.0
         for i in range(0, epoch):
-            idx1 = permu_data[i * m_group:(i + 1) * m_group]
-            result += elliptic__(dot(z[idx1], self.matrix_data))
+            idx = permu_data[i * m_group:(i + 1) * m_group]
+            result += elliptic__(dot(z[idx], matrix_data))
         return result
       
     # def F15(self, solution=None, name="D/2m-group Shifted and m-rotated Rastrigin’s Function", m_group=50):
-    def F15(self, solution=None):
-        m_group = self.m_shift
-        epoch = int(self.dimensions / m_group)
+    @numba.jit(nopython=True)
+    def F15(solution, shift_data, permu_data, matrix_data, m_group, dim):
+        epoch = int(dim / m_group)
         # check_m_group("F15", self.dimensions, m_group)
-        shift_data, permu_data = self.shift_data, self.perm_data
         z = solution - shift_data
         result = 0.0
         for i in range(0, epoch):
-            idx1 = permu_data[i * m_group:(i + 1) * m_group]
-            result += rastrigin__(dot(z[idx1], self.matrix_data))
+            idx = permu_data[i * m_group:(i + 1) * m_group]
+            result += rastrigin__(dot(z[idx], matrix_data))
         return result
   
     # def F16(self, solution=None, name="D/2m-group Shifted and m-rotated Ackley’s Function", m_group=50):
-    def F16(self, solution=None):
-        m_group = self.m_shift
-        epoch = int(self.dimensions / m_group)
+    @numba.jit(nopython=True)
+    def F16(solution, shift_data, permu_data, matrix_data, m_group, dim):
+        epoch = int(dim / m_group)
         # check_m_group("F16", self.dimensions, m_group)
-        shift_data, permu_data = self.shift_data, self.perm_data
         z = solution - shift_data
         result = 0.0
         for i in range(0, epoch):
-            idx1 = permu_data[i * m_group:(i + 1) * m_group]
-            result += ackley__(dot(z[idx1], self.matrix_data))
+            idx = permu_data[i * m_group:(i + 1) * m_group]
+            result += ackley__(dot(z[idx], matrix_data))
         return result
   
     # def F17(self, solution=None, name="D/2m-group Shifted m-dimensional Schwefel’s Problem 1.2", m_group=4):
-    def F17(self, solution=None):
-        m_group = self.m_shift
-        epoch = int(self.dimensions / m_group)
+    @numba.jit(nopython=True)
+    def F17(solution, shift_data, permu_data, matrix_data, m_group, dim):
+        epoch = int(dim / m_group)
         # check_m_group("F17", self.dimensions, m_group)
-        shift_data, permu_data = self.shift_data, self.perm_data
         z = solution - shift_data
         result = 0.0
         for i in range(0, epoch):
-            idx1 = permu_data[i * m_group:(i + 1) * m_group]
-            result += schwefel__(z[idx1])
+            idx = permu_data[i * m_group:(i + 1) * m_group]
+            result += schwefel__(z[idx])
         return result
 
     # def F18(self, solution=None, name="D/2m-group Shifted m-dimensional Rosenbrock’s Function", m_group=50):
-    def F18(self, solution=None):
-        m_group = self.m_shift
-        epoch = int(self.dimensions / m_group)
+    @numba.jit(nopython=True)
+    def F18(solution, shift_data, permu_data, matrix_data, m_group, dim):
+        epoch = int(dim / m_group)
         # check_m_group("F18", self.dimensions, m_group)
-        shift_data, permu_data = self.shift_data, self.perm_data
         z = solution - shift_data
         result = 0.0
         for i in range(0, epoch):
-            idx1 = permu_data[i * m_group:(i + 1) * m_group]
-            result += rosenbrock__(z[idx1])
+            idx = permu_data[i * m_group:(i + 1) * m_group]
+            result += rosenbrock__(z[idx])
         return result
    
     # def F19(self, solution=None, name="Shifted Schwefel’s Problem 1.2"):
-    def F19(self, solution=None):
-        m_group = self.m_shift
-        shift_data = self.shift_data[:self.dimensions]
+    @numba.jit(nopython=True)
+    def F19(solution, shift_data, permu_data, matrix_data, m_group, dim):
         z = solution - shift_data
         return schwefel__(z)
     
     # def F20(self, solution=None, name="Shifted Rosenbrock’s Function"):
-    def F20(self, solution=None):
-        m_group = self.m_shift
-        shift_data = self.shift_data[:self.dimensions]
+    @numba.jit(nopython=True)
+    def F20(solution, shift_data, permu_data, matrix_data, m_group, dim):
         z = solution - shift_data
         return rosenbrock__(z)
 
 
 
 if __name__ == '__main__':
-    f = BenchmarkFunction(0)
-
-    x = np.zeros((1000,),dtype="float64")
-    f.run(x)
-    # f.grad_estimate(x)
+    import time
+    fs = [BenchmarkFunction(1)]
+    fs = [BenchmarkFunction(i,matrix_data=fs[0].matrix_data) for i in range(1,21)]
+    for i in range(1,21):
+        f = fs[i-1]
+        x = np.zeros((1000,),dtype="float64")
+        last = time.time_ns()
+        for _ in range(10000):
+            f.run(x)
+        now = time.time_ns()
+        print(i,(now-last)/1000000000)
+        # f.grad_estimate(x)
