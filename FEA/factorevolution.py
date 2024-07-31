@@ -21,7 +21,7 @@ class FEA:
         self.global_solution = None
         self.global_fitness = np.inf
         self.solution_history = []
-        self.set_global_solution(continuous)
+        self.initialize_global_solution(continuous)
         self.subpopulations = self.initialize_factored_subpopulations()
 
     def run(self):
@@ -33,7 +33,7 @@ class FEA:
             self.share_solution()
             print('fea run ', fea_run, self.global_fitness)
 
-    def set_global_solution(self, continuous):
+    def initialize_global_solution(self, continuous):
         if continuous:
             self.global_solution = np.random.uniform(self.function.lbound, self.function.ubound, size=self.factor_architecture.dim)
             self.global_fitness = self.function.run(self.global_solution)
@@ -50,12 +50,12 @@ class FEA:
         """
         Construct new global solution based on best shared variables from all swarms
         """
-        gs = [x for x in self.global_solution]
-        print('global fitness found: ', self.global_fitness)
-        print('===================================================')
+        gs = np.copy(self.global_solution)
         for alg in self.subpopulations:
+            alg.set_global_solution(gs)
             # update fitnesses
-            alg.pop = [individual.update_individual_after_compete(gs) for individual in alg.pop]
+            for individual in alg.pop:
+                individual.update_individual_after_compete(gs)
             # set best solution and replace worst solution with global solution across FEA
             alg.replace_worst_solution(gs)
 
